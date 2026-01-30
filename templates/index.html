@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iOS Elite | ProjectZero 3.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --ios-blur: blur(30px);
+            --ios-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        body {
+            background: #0f172a;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            perspective: 1500px;
+        }
+
+        #device-frame {
+            position: relative;
+            width: 390px;
+            height: 844px;
+            background: #1a1a1a;
+            border-radius: 60px;
+            padding: 12px;
+            box-shadow: 0 0 0 2px #333, 0 0 0 8px #000, var(--ios-shadow);
+            transform-style: preserve-3d;
+            transition: transform 0.2s cubic-bezier(0.2, 0, 0.2, 1);
+        }
+
+        #screen {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            border-radius: 48px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            user-select: none;
+        }
+
+        .wallpaper {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(145deg, #1e1b4b 0%, #4c1d95 50%, #831843 100%);
+            z-index: 0;
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.5;
+            animation: move 20s infinite alternate ease-in-out;
+        }
+
+        @keyframes move {
+            from { transform: translate(-10%, -10%) scale(1); }
+            to { transform: translate(20%, 20%) scale(1.2); }
+        }
+
+        .dynamic-island {
+            width: 140px;
+            height: 37px;
+            background: #000;
+            border-radius: 22px;
+            position: absolute;
+            top: 11px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 16px;
+            transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .dynamic-island:hover {
+            box-shadow: 0 0 15px rgba(255,255,255,0.1);
+        }
+
+        .app-grid {
+            padding: 70px 24px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px 20px;
+            z-index: 10;
+        }
+
+        .app-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .app-icon {
+            width: 62px;
+            height: 62px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .app-icon:active { transform: scale(0.9); }
+
+        .app-window {
+            position: absolute;
+            inset: 0;
+            background: #fff;
+            z-index: 500;
+            border-radius: 48px;
+            display: none;
+            flex-direction: column;
+            transform: translateY(100%);
+            overflow: hidden;
+        }
+
+        .dock {
+            position: absolute;
+            bottom: 24px;
+            left: 18px;
+            right: 18px;
+            height: 94px;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border-radius: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: space-evenly;
+            padding: 0 10px;
+            z-index: 100;
+        }
+
+        .status-bar {
+            position: absolute;
+            top: 18px;
+            width: 100%;
+            padding: 0 34px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            z-index: 900;
+        }
+
+        /* App Icon Styles */
+        .icon-photos { background: white; color: #ff3b30; }
+        .icon-weather { background: linear-gradient(#5ac8fa, #007aff); }
+        .icon-music { background: linear-gradient(#fd2d55, #fd3b6c); }
+        .icon-camera { background: linear-gradient(#444, #111); }
+        .icon-safari { background: #fff; color: #007aff; }
+        .icon-phone { background: linear-gradient(#4cd964, #28cd41); }
+        .icon-mail { background: linear-gradient(#5ac8fa, #007aff); }
+        .icon-settings { background: linear-gradient(#8e8e93, #636366); }
+        .icon-notes { background: #fff; color: #f2c94c; }
+        .icon-calendar { background: #fff; color: #ff3b30; }
+        .icon-appstore { background: linear-gradient(#34aadc, #007aff); }
+        .icon-messages { background: #4cd964; color: white; }
+
+        /* Recording Pulse */
+        .rec-dot {
+            width: 10px;
+            height: 10px;
+            background: red;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+        .home-indicator {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 130px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            z-index: 1001;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="device-frame">
+        <div id="screen">
+            <!-- Wallpaper -->
+            <div class="wallpaper">
+                <div class="blob w-80 h-80 bg-purple-600 top-[-10%] left-[-10%]"></div>
+                <div class="blob w-72 h-72 bg-blue-600 bottom-[-5%] right-[-5%]"></div>
+            </div>
+
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <span id="time">09:41</span>
+                <div class="flex gap-2 items-center">
+                    <i class="fas fa-signal"></i>
+                    <i class="fas fa-wifi"></i>
+                    <i class="fas fa-battery-full text-lg"></i>
+                </div>
+            </div>
+
+            <!-- Dynamic Island -->
+            <div class="dynamic-island" id="island" onclick="toggleIslandMusic()">
+                <!-- State: Default/Recording -->
+                <div id="island-content" class="text-white text-[10px] font-bold opacity-0 absolute transition-opacity pointer-events-none">Recording...</div>
+                
+                <!-- State: Music (Hidden initially) -->
+                <div id="island-music" class="w-full h-full flex items-center justify-between px-2 opacity-0 hidden">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex-shrink-0"></div>
+                        <div class="flex flex-col overflow-hidden">
+                            <span class="text-white text-[11px] font-bold truncate">ProjectZero Beat</span>
+                            <span class="text-white/50 text-[9px] truncate">Ephemeral Audio</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 text-white text-xs mr-2">
+                        <i class="fas fa-backward opacity-40"></i>
+                        <i class="fas fa-pause"></i>
+                        <i class="fas fa-forward opacity-40"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- App Grid -->
+            <div class="app-grid">
+                <div class="app-item" onclick="openApp('photos')">
+                    <div class="app-icon icon-photos"><i class="fas fa-images"></i></div>
+                    <span class="text-white text-[11px]">Photos</span>
+                </div>
+                <div class="app-item" onclick="openApp('weather')">
+                    <div class="app-icon icon-weather text-white"><i class="fas fa-sun"></i></div>
+                    <span class="text-white text-[11px]">Weather</span>
+                </div>
+                <div class="app-item" onclick="openApp('calendar')">
+                    <div class="app-icon icon-calendar flex-col">
+                        <span class="text-[9px] font-bold text-red-500 uppercase">Wed</span>
+                        <span class="text-xl font-bold text-black mt-[-5px]">14</span>
+                    </div>
+                    <span class="text-white text-[11px]">Calendar</span>
+                </div>
+                <div class="app-item" onclick="openApp('music')">
+                    <div class="app-icon icon-music text-white"><i class="fas fa-music"></i></div>
+                    <span class="text-white text-[11px]">Music</span>
+                </div>
+                <div class="app-item" onclick="openApp('camera')">
+                    <div class="app-icon icon-camera text-gray-300"><i class="fas fa-camera"></i></div>
+                    <span class="text-white text-[11px]">Camera</span>
+                </div>
+                <div class="app-item" onclick="openApp('settings')">
+                    <div class="app-icon icon-settings text-white"><i class="fas fa-cog"></i></div>
+                    <span class="text-white text-[11px]">Settings</span>
+                </div>
+                <div class="app-item" onclick="openApp('notes')">
+                    <div class="app-icon icon-notes text-yellow-500"><i class="fas fa-sticky-note"></i></div>
+                    <span class="text-white text-[11px]">Notes</span>
+                </div>
+                <div class="app-item" onclick="openApp('appstore')">
+                    <div class="app-icon icon-appstore text-white"><i class="fab fa-apple"></i></div>
+                    <span class="text-white text-[11px]">App Store</span>
+                </div>
+            </div>
+
+            <!-- Dock -->
+            <div class="dock">
+                <div class="app-icon icon-phone text-white !w-14 !h-14" onclick="openApp('phone')"><i class="fas fa-phone"></i></div>
+                <div class="app-icon icon-messages !w-14 !h-14" onclick="openApp('messages')"><i class="fas fa-comment"></i></div>
+                <div class="app-icon icon-safari !w-14 !h-14" onclick="openApp('safari')"><i class="fas fa-compass text-3xl"></i></div>
+                <div class="app-icon icon-mail text-white !w-14 !h-14" onclick="openApp('mail')"><i class="fas fa-envelope"></i></div>
+            </div>
+
+            <div class="home-indicator" onclick="closeApps()"></div>
+
+            <!-- App Windows -->
+            
+            <!-- PHOTOS APP -->
+            <div id="app-photos" class="app-window bg-black text-white">
+                <div class="p-8 pt-16">
+                    <h1 class="text-3xl font-bold mb-4">Photos</h1>
+                    <p class="text-xs text-gray-500 mb-6 uppercase tracking-widest">Recent Captures (expires in 60s)</p>
+                    <div id="temp-gallery" class="grid grid-cols-3 gap-1">
+                        <!-- Temporary items here -->
+                    </div>
+                    <div class="mt-8 border-t border-white/10 pt-4">
+                        <p class="text-gray-400 text-sm">Library</p>
+                        <div class="grid grid-cols-3 gap-1 mt-2">
+                            <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400&h=400&fit=crop" class="aspect-square object-cover">
+                            <img src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=400&fit=crop" class="aspect-square object-cover">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CAMERA APP -->
+            <div id="app-camera" class="app-window bg-black">
+                <video id="cam-feed" autoplay playsinline class="w-full h-2/3 object-cover"></video>
+                <div class="flex-1 flex flex-col items-center justify-between py-8 px-6">
+                    <div id="cam-modes" class="flex gap-6 text-white/50 text-[11px] font-bold uppercase">
+                        <span id="mode-photo" class="text-yellow-500 cursor-pointer" onclick="setCamMode('photo')">Photo</span>
+                        <span id="mode-video" class="cursor-pointer" onclick="setCamMode('video')">Video</span>
+                    </div>
+                    <div class="flex items-center justify-between w-full px-4">
+                        <div class="w-12 h-12 rounded-lg border border-white/20 overflow-hidden bg-gray-900" id="cam-preview">
+                            <!-- Last captured thumb -->
+                        </div>
+                        <button id="shutter" onclick="handleCapture()" class="w-16 h-16 rounded-full border-[4px] border-white p-1">
+                            <div id="shutter-inner" class="w-full h-full bg-white rounded-full"></div>
+                        </button>
+                        <div class="w-12 h-12 flex items-center justify-center text-white text-xl">
+                            <i class="fas fa-sync-alt"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WEATHER APP -->
+            <div id="app-weather" class="app-window bg-gradient-to-b from-blue-400 to-blue-600 text-white flex flex-col items-center pt-20">
+                <h2 class="text-2xl font-medium">Dubai</h2>
+                <h1 class="text-8xl font-thin">34°</h1>
+                <p class="text-lg">Mostly Sunny</p>
+                <div class="mt-auto w-full p-6 bg-white/10 backdrop-blur-xl">
+                    <div class="flex justify-between border-b border-white/20 pb-2">
+                        <span>Tuesday</span><i class="fas fa-sun"></i><span>36° 24°</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SETTINGS APP -->
+            <div id="app-settings" class="app-window bg-[#f2f2f7]">
+                <div class="pt-16 px-6">
+                    <h1 class="text-3xl font-bold mb-6">Settings</h1>
+                    <div class="bg-white rounded-xl overflow-hidden shadow-sm">
+                        <div class="p-4 border-b flex justify-between items-center">
+                            <div class="flex items-center gap-3">
+                                <div class="w-7 h-7 bg-orange-500 rounded flex items-center justify-center text-white text-xs"><i class="fas fa-plane"></i></div>
+                                <span>Airplane Mode</span>
+                            </div>
+                            <div class="w-10 h-6 bg-gray-200 rounded-full relative"><div class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div></div>
+                        </div>
+                        <div class="p-4 flex justify-between items-center">
+                            <div class="flex items-center gap-3">
+                                <div class="w-7 h-7 bg-blue-500 rounded flex items-center justify-center text-white text-xs"><i class="fas fa-wifi"></i></div>
+                                <span>Wi-Fi</span>
+                            </div>
+                            <span class="text-gray-400">ProjectZero_5G</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MUSIC APP -->
+            <div id="app-music" class="app-window bg-zinc-900 text-white">
+                <div class="flex flex-col items-center justify-center h-full p-10 text-center">
+                    <div class="w-64 h-64 bg-gradient-to-br from-pink-500 to-purple-600 rounded-2xl shadow-2xl mb-10 flex items-center justify-center">
+                         <i class="fas fa-music text-7xl text-white/30"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold">Ephemeral Beats</h2>
+                    <p class="text-gray-400">ProjectZero Originals</p>
+                    <div class="w-full h-1 bg-white/10 mt-8 rounded-full overflow-hidden">
+                        <div class="w-1/3 h-full bg-white"></div>
+                    </div>
+                    <div class="flex gap-10 mt-10 text-2xl">
+                        <i class="fas fa-backward"></i>
+                        <i class="fas fa-play"></i>
+                        <i class="fas fa-forward"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PLACEHOLDERS FOR OTHERS -->
+            <div id="app-calendar" class="app-window bg-white"><div class="p-20 text-center text-gray-400"><i class="fas fa-calendar-alt text-5xl mb-4"></i><br>Calendar Events Loading...</div></div>
+            <div id="app-notes" class="app-window bg-[#fffbeb]"><div class="p-20 text-center text-gray-400"><i class="fas fa-pen-nib text-5xl mb-4"></i><br>Empty Note</div></div>
+            <div id="app-appstore" class="app-window bg-white"><div class="p-20 text-center text-gray-400"><i class="fab fa-apple text-5xl mb-4"></i><br>App Store Secure Link...</div></div>
+            <div id="app-phone" class="app-window bg-white"><div class="p-20 text-center text-gray-400"><i class="fas fa-phone text-5xl mb-4"></i><br>No Recent Calls</div></div>
+            <div id="app-messages" class="app-window bg-white"><div class="p-20 text-center text-gray-400"><i class="fas fa-comments text-5xl mb-4"></i><br>No Messages</div></div>
+            <div id="app-safari" class="app-window bg-white">
+                <div class="pt-14 px-4"><div class="bg-gray-100 p-2 rounded-lg text-xs text-gray-500 text-center">safari.google.com</div></div>
+                <div class="p-20 text-center text-gray-400"><i class="fas fa-compass text-5xl mb-4"></i><br>Safari Browser</div>
+            </div>
+            <div id="app-mail" class="app-window bg-white"><div class="p-20 text-center text-gray-400"><i class="fas fa-envelope text-5xl mb-4"></i><br>Inbox Empty</div></div>
+
+        </div>
+    </div>
+
+    <script>
+        // Core Setup
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('time').innerText = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // App Control
+        let currentApp = null;
+        function openApp(id) {
+            const app = document.getElementById('app-' + id);
+            if(!app) return;
+            currentApp = app;
+            app.style.display = 'flex';
+            gsap.fromTo(app, 
+                { y: '100%', scale: 0.8, opacity: 0 },
+                { y: 0, scale: 1, opacity: 1, duration: 0.5, ease: "power4.out" }
+            );
+            if(id === 'camera') startCamera();
+        }
+
+        function closeApps() {
+            if(!currentApp) return;
+            gsap.to(currentApp, { 
+                y: '100%', scale: 0.9, opacity: 0, duration: 0.4, ease: "power4.in",
+                onComplete: () => {
+                    currentApp.style.display = 'none';
+                    if(currentApp.id === 'app-camera') stopCamera();
+                    currentApp = null;
+                }
+            });
+        }
+
+        // Camera & Video Logic
+        let cameraStream = null;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let currentMode = 'photo'; // 'photo' or 'video'
+        let isRecording = false;
+        let tempGallery = [];
+
+        async function startCamera() {
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                document.getElementById('cam-feed').srcObject = cameraStream;
+            } catch(e) { console.log("Cam Access Error:", e); }
+        }
+
+        function stopCamera() {
+            if(cameraStream) {
+                cameraStream.getTracks().forEach(t => t.stop());
+                cameraStream = null;
+            }
+        }
+
+        function setCamMode(mode) {
+            currentMode = mode;
+            document.getElementById('mode-photo').classList.toggle('text-yellow-500', mode === 'photo');
+            document.getElementById('mode-video').classList.toggle('text-red-500', mode === 'video');
+            document.getElementById('shutter-inner').style.background = mode === 'photo' ? 'white' : 'red';
+            document.getElementById('shutter-inner').style.borderRadius = '100%';
+        }
+
+        function handleCapture() {
+            if(currentMode === 'photo') {
+                takePhoto();
+            } else {
+                toggleRecording();
+            }
+        }
+
+        function takePhoto() {
+            const screen = document.getElementById('screen');
+            gsap.to(screen, { filter: 'brightness(3)', duration: 0.1, yoyo: true, repeat: 1 });
+            const imgUrl = `https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=400&h=400&fit=crop&sig=${Math.random()}`;
+            addToTempGallery('image', imgUrl);
+        }
+
+        function toggleRecording() {
+            if(!isRecording) {
+                recordedChunks = [];
+                mediaRecorder = new MediaRecorder(cameraStream);
+                mediaRecorder.ondataavailable = (e) => { if(e.data.size > 0) recordedChunks.push(e.data); };
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                    const url = URL.createObjectURL(blob);
+                    addToTempGallery('video', url);
+                };
+                mediaRecorder.start();
+                isRecording = true;
+                document.getElementById('shutter-inner').classList.add('scale-75', 'rounded-lg');
+                expandIsland(true);
+            } else {
+                mediaRecorder.stop();
+                isRecording = false;
+                document.getElementById('shutter-inner').classList.remove('scale-75', 'rounded-lg');
+                expandIsland(false);
+            }
+        }
+
+        // Dynamic Island States
+        let isMusicIsland = false;
+        function toggleIslandMusic() {
+            if (isRecording) return; // Priority for recording state
+
+            const island = document.getElementById('island');
+            const musicContent = document.getElementById('island-music');
+            
+            isMusicIsland = !isMusicIsland;
+
+            if (isMusicIsland) {
+                gsap.to(island, { width: 350, height: 70, duration: 0.6, ease: "elastic.out(1, 0.8)" });
+                musicContent.classList.remove('hidden');
+                gsap.to(musicContent, { opacity: 1, duration: 0.3, delay: 0.1 });
+            } else {
+                gsap.to(musicContent, { opacity: 0, duration: 0.2, onComplete: () => musicContent.classList.add('hidden') });
+                gsap.to(island, { width: 140, height: 37, duration: 0.5, ease: "power4.inOut" });
+            }
+        }
+
+        function expandIsland(show) {
+            const island = document.getElementById('island');
+            const content = document.getElementById('island-content');
+            if(show) {
+                isMusicIsland = false; // Hide music if recording starts
+                document.getElementById('island-music').classList.add('hidden');
+                gsap.to(island, { width: 180, height: 40, duration: 0.4 });
+                content.innerHTML = `<span class="rec-dot"></span> REC 00:01`;
+                content.classList.replace('opacity-0', 'opacity-100');
+            } else {
+                gsap.to(island, { width: 140, height: 37, duration: 0.4 });
+                content.classList.replace('opacity-100', 'opacity-0');
+            }
+        }
+
+        function addToTempGallery(type, url) {
+            const id = Date.now();
+            const item = { id, type, url, expires: Date.now() + 60000 };
+            tempGallery.push(item);
+            updateGalleryUI();
+            setTimeout(() => {
+                tempGallery = tempGallery.filter(i => i.id !== id);
+                updateGalleryUI();
+            }, 60000);
+            const preview = document.getElementById('cam-preview');
+            preview.innerHTML = type === 'image' 
+                ? `<img src="${url}" class="w-full h-full object-cover">`
+                : `<video src="${url}" class="w-full h-full object-cover" muted autoplay></video>`;
+        }
+
+        function updateGalleryUI() {
+            const container = document.getElementById('temp-gallery');
+            if (!container) return;
+            container.innerHTML = '';
+            tempGallery.forEach(item => {
+                const div = document.createElement('div');
+                div.className = "aspect-square relative overflow-hidden bg-zinc-800 rounded-sm border border-white/5";
+                if(item.type === 'image') {
+                    div.innerHTML = `<img src="${item.url}" class="w-full h-full object-cover">`;
+                } else {
+                    div.innerHTML = `<video src="${item.url}" class="w-full h-full object-cover" loop muted autoplay></video>
+                                    <i class="fas fa-play absolute inset-0 m-auto text-white text-[10px] opacity-50"></i>`;
+                }
+                container.appendChild(div);
+            });
+        }
+
+        // Hover 3D
+        const frame = document.getElementById('device-frame');
+        document.addEventListener('mousemove', (e) => {
+            const x = (window.innerWidth / 2 - e.pageX) / 40;
+            const y = (window.innerHeight / 2 - e.pageY) / 40;
+            gsap.to(frame, { rotateY: -x, rotateX: y, duration: 0.5 });
+        });
+
+    </script>
+</body>
+</html>
